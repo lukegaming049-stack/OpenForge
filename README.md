@@ -1,4 +1,4 @@
-# OpenForge
+# OpenForge(beta)
 
 An open-source coding agent harness you run yourself: **bring your own key** (or
 your own `.gguf`), a tool-calling loop that actually edits your repo, and a
