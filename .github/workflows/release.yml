@@ -1,0 +1,86 @@
+name: release
+
+# Tag a commit (git tag v0.1.0 && git push --tags) to build every platform and
+# attach the binaries to a GitHub Release.  Manual runs build without releasing.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            asset: openforge-windows-x64.exe
+            binary: dist/openforge.exe
+          - os: ubuntu-latest
+            asset: openforge-linux-x64
+            binary: dist/openforge
+          - os: macos-latest
+            asset: openforge-macos-arm64
+            binary: dist/openforge
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . pyinstaller
+
+      # Best effort: prebuilt CPU wheels for llama.cpp. If this fails the binary
+      # is still built, just without local GGUF support.
+      - name: Try to add GGUF support
+        continue-on-error: true
+        run: pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+
+      - name: Build executable
+        run: pyinstaller openforge.spec --noconfirm --clean
+
+      - name: Smoke test the binary
+        shell: bash
+        run: |
+          ./${{ matrix.binary }} --version
+          ./${{ matrix.binary }} --help > /dev/null
+
+      - name: Name the artifact
+        shell: bash
+        run: cp "${{ matrix.binary }}" "dist/${{ matrix.asset }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+          if-no-files-found: error
+
+  release:
+    name: publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ls -la artifacts/*/
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "OpenForge $GITHUB_REF_NAME" \
+            --generate-notes \
+            artifacts/*/*

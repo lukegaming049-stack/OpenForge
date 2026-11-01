@@ -1,4 +1,6 @@
-# OpenForge(beta)
+# OpenForge
+
+[![Latest release](https://img.shields.io/github/v/release/lukegaming049-stack/OpenForge?label=download&color=black)](https://github.com/lukegaming049-stack/OpenForge/releases/latest)
 
 An open-source coding agent harness you run yourself: **bring your own key** (or
 your own `.gguf`), a tool-calling loop that actually edits your repo, and a
@@ -43,6 +45,56 @@ Three things this does that most harnesses don't:
    approve before it runs.
 
 ---
+
+## Download a prebuilt binary
+
+No Python, no pip — grab the single-file build for your platform from
+**[Releases](https://github.com/lukegaming049-stack/OpenForge/releases/latest)**:
+
+| Platform | File |
+| --- | --- |
+| Windows x64 | `openforge-windows-x64.exe` |
+| Linux x64 | `openforge-linux-x64` |
+| macOS (Apple silicon) | `openforge-macos-arm64` |
+
+```powershell
+# Windows (PowerShell)
+.\openforge-windows-x64.exe init
+.\openforge-windows-x64.exe
+```
+
+```bash
+# Linux / macOS
+chmod +x openforge-linux-x64
+./openforge-linux-x64
+```
+
+Two things to know about the prebuilt binaries:
+
+- **Windows SmartScreen will warn you** — the executable is unsigned, so you get
+  "Windows protected your PC". Click *More info → Run anyway*. Signing needs a
+  code-signing certificate, which this project doesn't have.
+- **GGUF support is best effort.** The build bundles `llama-cpp-python` when the
+  prebuilt wheel installs cleanly on the runner; if you need local models and
+  the bundled binary can't load one, `pip install "openforge[gguf]"` and use the
+  Python install instead. `openforge doctor` tells you which case you're in.
+
+### Build the executable yourself
+
+```powershell
+# Windows
+powershell -ExecutionPolicy Bypass -File scripts\build-exe.ps1   # -> dist\openforge.exe
+```
+
+```bash
+# Linux / macOS
+./scripts/build-binary.sh                                        # -> dist/openforge
+```
+
+Both wrap `pyinstaller openforge.spec`, which collects Textual's CSS assets and,
+when present, the llama.cpp shared libraries. Tagging a commit (`git tag v0.1.1
+&& git push --tags`) makes `.github/workflows/release.yml` rebuild all three
+platforms and attach them to a release.
 
 ## Install
 
