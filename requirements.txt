@@ -1,0 +1,10 @@
+# Core (TUI + HTTP).  Everything else is optional.
+textual>=0.60
+rich>=13.7
+httpx>=0.27
+
+# Local GGUF inference (optional):
+#   CPU:   pip install llama-cpp-python
+#   CUDA:  CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --no-binary :all:
+#   Metal: CMAKE_ARGS="-DGGML_METAL=on" pip install llama-cpp-python --no-binary :all:
+llama-cpp-python>=0.2.90; extra == "gguf"
